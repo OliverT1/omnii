@@ -35,7 +35,7 @@ def read_image_from_url(url):
     resHead = requests.head(url)
     size = resHead.headers.get('content-length', -1)
     # size in megabytes (f-string, Python 3 only)
-    print(f"{'FILE SIZE':<40}: {int(size) / float(1 << 20):.2f} MB")
+    # print(f"{'FILE SIZE':<40}: {int(size) / float(1 << 20):.2f} MB")
 
     # resGet = requests.get(url, headers=DCLIMATE_HEADERS, stream=True)
     # print(resGet)
@@ -55,6 +55,7 @@ def get_satellite_data(verra_data):
     """Gets the biomass at a location and time from satellite imagery
     """
     location = verra_data["location"]
+    print("location", location)
 
     lat_c = location["latitude"]
     lon_c = location["longitude"]
@@ -67,21 +68,36 @@ def get_satellite_data(verra_data):
 
     biomass = {}    # biomass for different times
 
-    # for year in [2010, 2017, 2018]:
-    for year in [2010]:
+    for year in [2010, 2017, 2018]:
+    # for year in [2010]:
         print(f"{DCLIMATE_URL}/{year}/{lat_tl}_{lon_tl}/AGB")
-        # dataset = read_image_from_url(f"{DCLIMATE_URL}/{year}/{lat_tl}_{lon_tl}/AGB") 
-        dataset = rasterio.open("example1.tif")
-        show(dataset)
+        dataset = read_image_from_url(f"{DCLIMATE_URL}/{year}/{lat_tl}_{lon_tl}/AGB") 
+        # dataset = rasterio.open("example1.tif")
+        # show(dataset)
         print(dataset.count, dataset.height, dataset.width, dataset.crs, dataset.bounds)
         print(dataset.read(1))
         row, col = dataset.index(lat_c, lon_c)
         print("centre point of matrix", row, col)
         print("bottom right", dataset.index(dataset.bounds.bottom, dataset.bounds.right))
         
-        calculate_carbon_density(verra_data, dataset)
+        biomass[year] = calculate_carbon_density(verra_data, dataset)
 
         # show(dataset)
+    print(biomass)
+
+    baseline = np.mean([biomass[2010], biomass[2017]])
+    print(f"Baseline: {baseline}")
+    delta = biomass[2018] - baseline
+    print("delta", delta)
+
+    # if delta < 
+    #     # mint no token
+
+    # else:
+    #     # mint yes token
+
+    # # return delta 
+
 
 
 
@@ -114,7 +130,7 @@ def calculate_carbon_density(verra_data, satellite_data):
 
     f = location["latitude"]
     l = location["longitude"]
-    print("f", f, "l", l)
+    # print("f", f, "l", l)
 
 
     df = r/114        # North-south distance in degrees
@@ -123,17 +139,17 @@ def calculate_carbon_density(verra_data, satellite_data):
     max_lat = f + df
     min_lon = l - dl
     max_lon = l + dl
-    print("min lat", min_lat, "max lat", max_lat, "min lon", min_lon, "max lon", max_lon)
+    # print("min lat", min_lat, "max lat", max_lat, "min lon", min_lon, "max lon", max_lon)
 
     band1 = satellite_data.read(1)
-    print(np.shape(band1))
+    # print(np.shape(band1))
 
     offset_row, offset_col = satellite_data.index(satellite_data.bounds.bottom, satellite_data.bounds.right)
-    print(offset_col, offset_row)
+    # print(offset_col, offset_row)
 
     max_row, max_col = satellite_data.index(max_lat, min_lon)
     min_row, min_col = satellite_data.index(min_lat, max_lon)
-    print(min_row, min_col, max_row, max_col)
+    # print(min_row, min_col, max_row, max_col)
 
     # apply the offset
     min_row -= offset_row
@@ -142,11 +158,12 @@ def calculate_carbon_density(verra_data, satellite_data):
     max_col -= offset_col
 
 
-    print(min_row, min_col, max_row, max_col)
+    # print(min_row, min_col, max_row, max_col)
     show(band1[min_row:max_row, min_col:max_col])
     carbon_density_total = np.sum(band1[min_row:max_row, min_col:max_col])
-    print(carbon_density_total)
+    # print(carbon_density_total)
 
+    return carbon_density_total
 
 
 
@@ -161,8 +178,10 @@ def carbon_density(project_id):
     """
     carbon = 0
     
-    location = get_verra_data(project_id)
+    verra_data = get_verra_data(project_id)
     satellite_data = get_satellite_data(location)
+    calculate_carbon_density(verra_data, satellite_data)
+
     return carbon
 
 
@@ -176,9 +195,29 @@ if __name__ == "__main__":
     # Coordinate Reference System
     
     # show(img)
-    verra_data = get_verra_data(2386)
+    verra_data = get_verra_data(1542)
+    # verra id 1911
+    # delta -585
+    # baseline 366043
+    # {2010: 378038, 2017: 354048, 2018: 365458}
+    #     "location": {
+    #     "latitude": 47.470000,
+    #     "longitude": -121.840000
+    # },
+    # "value": "815 Acres"
 
-    # "latitude": 45.355583,
-    # "longitude": 22.732462
+
+    # 607
+    #     "location": {
+    #     "latitude": 49.288547,
+    #     "longitude": -116.846603
+    # },
+
+    # 1542 on toucan
+    # location {'latitude': 25.908866, 'longitude': 102.968453}
+    #    est annual redct 54734 size in sq km 68.79
+    # box length 8.293973715897586
+    # {2010: 231486, 2017: 365191, 2018: 388331}
+    # Baseline: 298338.5
+    # delta 89992.5
     get_satellite_data(verra_data)
-
