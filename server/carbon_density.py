@@ -3,13 +3,13 @@ Functions for pulling carbon density data given a verra project ID.
 """
 
 import io
+import re
 import requests
-
-import tifffile as tiff
 
 import rasterio
 from rasterio.plot import show
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 VERRA_PROJECT_URL = "https://registry.verra.org/uiapi/resource/resourceSummary/"
@@ -72,20 +72,82 @@ def get_satellite_data(verra_data):
         print(f"{DCLIMATE_URL}/{year}/{lat_tl}_{lon_tl}/AGB")
         # dataset = read_image_from_url(f"{DCLIMATE_URL}/{year}/{lat_tl}_{lon_tl}/AGB") 
         dataset = rasterio.open("example1.tif")
+        show(dataset)
         print(dataset.count, dataset.height, dataset.width, dataset.crs, dataset.bounds)
-        print(dataset.indexes)
-        print(dataset.transform * (0, 0), dataset.transform * (dataset.width, dataset.height))
         print(dataset.read(1))
+        row, col = dataset.index(lat_c, lon_c)
+        print("centre point of matrix", row, col)
+        print("bottom right", dataset.index(dataset.bounds.bottom, dataset.bounds.right))
+        
+        calculate_carbon_density(verra_data, dataset)
+
         # show(dataset)
 
 
 
 def calculate_carbon_density(verra_data, satellite_data):
 
-    project_size = 0
+    est_annual_redct = 0
+    size_in_sqkm = 0
     for i in verra_data["participationSummaries"][0]["attributes"]:
         if i["code"] == "EST_ANNUAL_EMISSION_REDCT":
-            project_size = int(i["values"]["value"])
+            print(i)
+            est_annual_redct = int(i["values"][0]["value"])
+
+        if i["code"] == "PROJECT_ACREAGE":
+            size_str = i["values"][0]["value"]
+            # check if hectares or acres and convert to km
+            if "Acres" in size_str:
+                size_in_sqkm = int(''.join(c for c in size_str if c.isdigit())) / 247 
+            elif "Hectares" in size_str:
+                size_in_sqkm = int(''.join(c for c in size_str if c.isdigit())) * 0.01
+            else:
+                print("Could not find size of project")
+                return 0
+    print("est annual redct", est_annual_redct, "size in sq km", size_in_sqkm)
+    length_of_square_km = np.sqrt(size_in_sqkm)
+    print("box length", length_of_square_km)
+    r = length_of_square_km / 2
+
+    # central coords
+    location = verra_data["location"]
+
+    f = location["latitude"]
+    l = location["longitude"]
+    print("f", f, "l", l)
+
+
+    df = r/114        # North-south distance in degrees
+    dl = df / np.cos(np.deg2rad(f))  # East-west distance in degrees
+    min_lat = f - df
+    max_lat = f + df
+    min_lon = l - dl
+    max_lon = l + dl
+    print("min lat", min_lat, "max lat", max_lat, "min lon", min_lon, "max lon", max_lon)
+
+    band1 = satellite_data.read(1)
+    print(np.shape(band1))
+
+    offset_row, offset_col = satellite_data.index(satellite_data.bounds.bottom, satellite_data.bounds.right)
+    print(offset_col, offset_row)
+
+    max_row, max_col = satellite_data.index(max_lat, min_lon)
+    min_row, min_col = satellite_data.index(min_lat, max_lon)
+    print(min_row, min_col, max_row, max_col)
+
+    # apply the offset
+    min_row -= offset_row
+    max_row -= offset_row
+    min_col -= offset_col
+    max_col -= offset_col
+
+
+    print(min_row, min_col, max_row, max_col)
+    show(band1[min_row:max_row, min_col:max_col])
+    carbon_density_total = np.sum(band1[min_row:max_row, min_col:max_col])
+    print(carbon_density_total)
+
+
 
 
 def carbon_density(project_id):
@@ -114,5 +176,9 @@ if __name__ == "__main__":
     # Coordinate Reference System
     
     # show(img)
-    verra_data = get_verra_data(3018)
+    verra_data = get_verra_data(2386)
+
+    # "latitude": 45.355583,
+    # "longitude": 22.732462
     get_satellite_data(verra_data)
+
