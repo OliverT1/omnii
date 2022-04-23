@@ -1,0 +1,29 @@
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+ 
+
+.task-creation-app {
+  margin: auto;
+  width: 80%;
+  margin-top: 15%;
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+.wrapper {
+  width : 60%;
+  margin: auto;
+}

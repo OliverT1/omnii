@@ -1,0 +1,29 @@
+{
+  "name": "omii",
+  "version": "1.0.0",
+  "description": "Carbon emissions oracle for on chain verification of carbon credits.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OliverT1/omii.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/OliverT1/omii/issues"
+  },
+  "homepage": "https://github.com/OliverT1/omii#readme",
+  "dependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@openzeppelin/contracts": "^4.5.0",
+    "@openzeppelin/contracts-upgradeable": "^4.5.2",
+    "dotenv": "^16.0.0",
+    "ethers": "^5.6.4"
+  },
+  "devDependencies": {
+    "hardhat": "^2.9.3"
+  }
+}
