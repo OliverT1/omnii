@@ -18,7 +18,7 @@ a {
 
 .task-creation-app {
   margin: auto;
-  width: 80%;
+  width: 40%;
   margin-top: 15%;
   padding-top: 30px;
   padding-bottom: 30px;
@@ -26,4 +26,7 @@ a {
 .wrapper {
   width : 60%;
   margin: auto;
+}
+.submit {
+  margin-top:1000px
 }
