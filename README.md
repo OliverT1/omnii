@@ -21,7 +21,7 @@ API Schema:
   - projectedDelta1Year (float): promised reduction in CO2 (~biomass) in Verra contract. 
 
 
-## Contracts
+## Contracts
 
 - `OmiiCertificate.sol`
  ERC721 token for verification of Toucan Vintage Project
